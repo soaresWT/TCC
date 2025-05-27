@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Space, Typography, Card, message, Tag } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { useRouter } from "next/navigation";
+import { UserForm } from "./components/UserForm";
 
 const { Title } = Typography;
 
@@ -16,10 +16,20 @@ interface User {
   createdAt: string;
 }
 
+interface UserFormData {
+  email: string;
+  password?: string;
+  name: string;
+  campus: string;
+  role: string;
+}
+
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -39,6 +49,50 @@ export default function AdminPage() {
     fetchUsers();
   }, []);
 
+  const handleSubmit = async (values: UserFormData) => {
+    setFormLoading(true);
+    try {
+      const url = selectedUser
+        ? `/api/users/${selectedUser._id}`
+        : "/api/users";
+
+      const method = selectedUser ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao processar usuário");
+      }
+
+      message.success(
+        selectedUser
+          ? "Usuário atualizado com sucesso!"
+          : "Usuário cadastrado com sucesso!"
+      );
+
+      setModalOpen(false);
+      fetchUsers();
+    } catch (error) {
+      message.error((error as Error).message);
+    } finally {
+      setFormLoading(false);
+      setSelectedUser(null);
+    }
+  };
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setModalOpen(true);
+  };
+
   const columns = [
     {
       title: "Nome",
@@ -55,16 +109,7 @@ export default function AdminPage() {
       dataIndex: "role",
       key: "role",
       render: (role: string) => {
-        const colors = {
-          admin: "red",
-          tutor: "blue",
-          bolsista: "green",
-        };
-        return (
-          <Tag color={colors[role as keyof typeof colors]}>
-            {role.toUpperCase()}
-          </Tag>
-        );
+        return <Tag color="blue">{role}</Tag>;
       },
     },
     {
@@ -83,10 +128,7 @@ export default function AdminPage() {
       key: "actions",
       render: (_: unknown, record: User) => (
         <Space>
-          <Button
-            type="link"
-            onClick={() => router.push(`/admin/edit/${record._id}`)}
-          >
+          <Button type="link" onClick={() => handleEdit(record)}>
             Editar
           </Button>
           <Button type="link" danger>
@@ -111,7 +153,7 @@ export default function AdminPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => router.push("/cadastro")}
+            onClick={() => setModalOpen(true)}
           >
             Adicionar Usuário
           </Button>
@@ -123,6 +165,27 @@ export default function AdminPage() {
           rowKey="_id"
           loading={loading}
           pagination={{ pageSize: 10 }}
+        />
+
+        <UserForm
+          open={modalOpen}
+          onCancel={() => {
+            setModalOpen(false);
+            setSelectedUser(null);
+          }}
+          onSubmit={handleSubmit}
+          initialValues={
+            selectedUser
+              ? {
+                  name: selectedUser.name,
+                  email: selectedUser.email,
+                  campus: selectedUser.campus,
+                  role: selectedUser.role,
+                }
+              : undefined
+          }
+          loading={formLoading}
+          title={selectedUser ? "Editar Usuário" : "Novo Usuário"}
         />
       </Card>
     </div>
