@@ -3,31 +3,25 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConfigProvider } from "antd";
 import ptBR from "antd/locale/pt_BR";
+import { ClientLayout } from "./components/ClientLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sistema de Gestão de Atividades",
-  description: "Sistema para gestão de atividades de bolsistas",
+  title: "Sistema de Gestão",
+  description: "Sistema de Gestão de Atividades",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="pt-BR">
       <body className={inter.className}>
-        <ConfigProvider
-          locale={ptBR}
-          theme={{
-            token: {
-              colorPrimary: "#1677ff",
-            },
-          }}
-        >
-          {children}
+        <ConfigProvider locale={ptBR}>
+          <ClientLayout>{children}</ClientLayout>
         </ConfigProvider>
       </body>
     </html>
