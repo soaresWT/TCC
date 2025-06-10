@@ -9,6 +9,13 @@ const atividadeSchema = new Schema(
     bolsistas: [{ type: Types.ObjectId, ref: "User", required: false }],
     participantes: [{ type: Types.ObjectId, ref: "User", required: false }],
     datainicio: { type: Date, required: false },
+    arquivo: {
+      fileName: { type: String, required: false },
+      originalName: { type: String, required: false },
+      size: { type: Number, required: false },
+      type: { type: String, required: false },
+      url: { type: String, required: false },
+    },
   },
   { timestamps: true }
 );
