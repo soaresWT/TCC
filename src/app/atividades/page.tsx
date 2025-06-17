@@ -174,7 +174,11 @@ export default function AtividadesPage() {
             renderItem={(atividade) => (
               <List.Item
                 actions={[
-                  <Button key="view" type="link">
+                  <Button
+                    key="view"
+                    type="link"
+                    onClick={() => router.push(`/atividades/${atividade._id}`)}
+                  >
                     Ver Detalhes
                   </Button>,
                   <Button key="edit" type="link">
