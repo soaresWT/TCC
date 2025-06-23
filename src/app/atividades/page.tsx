@@ -7,6 +7,8 @@ import {
   CalendarOutlined,
   EnvironmentOutlined,
   UserOutlined,
+  DownloadOutlined,
+  FileOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +28,13 @@ interface Atividade {
     name: string;
     email: string;
     tipo: string;
+  };
+  arquivo?: {
+    fileName: string;
+    originalName: string;
+    size: number;
+    type: string;
+    url: string;
   };
 }
 
@@ -93,6 +102,19 @@ export default function AtividadesPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
+  };
+
+  const handleDownload = (arquivo: { url: string; originalName: string }) => {
+    if (arquivo.url) {
+      // Tentar fazer o download direto primeiro
+      const link = document.createElement("a");
+      link.href = arquivo.url;
+      link.download = arquivo.originalName;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -191,6 +213,18 @@ export default function AtividadesPage() {
                   >
                     Ver Detalhes
                   </Button>,
+                  ...(atividade.arquivo
+                    ? [
+                        <Button
+                          key="download"
+                          type="link"
+                          icon={<DownloadOutlined />}
+                          onClick={() => handleDownload(atividade.arquivo!)}
+                        >
+                          Download
+                        </Button>,
+                      ]
+                    : []),
                   <Button key="edit" type="link">
                     Editar
                   </Button>,
@@ -206,6 +240,12 @@ export default function AtividadesPage() {
                       }}
                     >
                       {atividade.nome}
+                      {atividade.arquivo && (
+                        <FileOutlined
+                          style={{ color: "#1890ff" }}
+                          title="Possui arquivo anexado"
+                        />
+                      )}
                       <Tag color={atividade.visibilidade ? "green" : "orange"}>
                         {atividade.visibilidade ? "Pública" : "Privada"}
                       </Tag>
@@ -231,6 +271,12 @@ export default function AtividadesPage() {
                           <span style={{ color: "#1890ff" }}>
                             <UserOutlined style={{ marginRight: "4px" }} />
                             Por: {atividade.autor.name} ({atividade.autor.tipo})
+                          </span>
+                        )}
+                        {atividade.arquivo && (
+                          <span style={{ color: "#52c41a" }}>
+                            <FileOutlined style={{ marginRight: "4px" }} />
+                            Arquivo: {atividade.arquivo.originalName}
                           </span>
                         )}
                         <span style={{ color: "#666" }}>
