@@ -1,13 +1,15 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, List, Button, Space, Tag, Input, Select, message } from "antd";
 import {
   PlusOutlined,
   SearchOutlined,
   CalendarOutlined,
   EnvironmentOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 const { Search } = Input;
 const { Option } = Select;
@@ -20,6 +22,11 @@ interface Atividade {
   visibilidade: boolean;
   datainicio?: string;
   createdAt: string;
+  autor?: {
+    name: string;
+    email: string;
+    tipo: string;
+  };
 }
 
 export default function AtividadesPage() {
@@ -32,6 +39,7 @@ export default function AtividadesPage() {
     datainicio: "",
   });
   const router = useRouter();
+  const { hasPermission } = useAuth();
 
   const campusOptions = [
     "Campus I - João Pessoa",
@@ -51,7 +59,7 @@ export default function AtividadesPage() {
     "Campus XV - Esperança",
   ];
 
-  const fetchAtividades = async () => {
+  const fetchAtividades = useCallback(async () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
@@ -77,11 +85,11 @@ export default function AtividadesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtros]);
 
   useEffect(() => {
     fetchAtividades();
-  }, [filtros]);
+  }, [fetchAtividades]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
@@ -107,14 +115,16 @@ export default function AtividadesPage() {
           <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "bold" }}>
             Atividades
           </h1>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => router.push("/atividades/cadastro")}
-            size="large"
-          >
-            Nova Atividade
-          </Button>
+          {hasPermission("create-activity") && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => router.push("/atividades/cadastro")}
+              size="large"
+            >
+              Nova Atividade
+            </Button>
+          )}
         </div>
 
         {/* Filtros */}
@@ -215,6 +225,12 @@ export default function AtividadesPage() {
                           <span>
                             <CalendarOutlined style={{ marginRight: "4px" }} />
                             Início: {formatDate(atividade.datainicio)}
+                          </span>
+                        )}
+                        {atividade.autor && (
+                          <span style={{ color: "#1890ff" }}>
+                            <UserOutlined style={{ marginRight: "4px" }} />
+                            Por: {atividade.autor.name} ({atividade.autor.tipo})
                           </span>
                         )}
                         <span style={{ color: "#666" }}>

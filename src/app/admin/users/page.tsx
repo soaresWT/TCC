@@ -20,14 +20,21 @@ export default function UsersPage() {
       const response = await fetch("/api/users");
       const data = await response.json();
       setUsers(data);
-    } catch (error) {
+    } catch {
       message.error("Erro ao carregar usuários");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: {
+    email: string;
+    password: string;
+    name: string;
+    tipo: string;
+    campus: string;
+    bolsa?: string;
+  }) => {
     try {
       const response = await fetch("/api/users", {
         method: "POST",
@@ -41,7 +48,7 @@ export default function UsersPage() {
       setIsModalOpen(false);
       form.resetFields();
       fetchUsers();
-    } catch (error) {
+    } catch {
       message.error("Erro ao criar usuário");
     }
   };

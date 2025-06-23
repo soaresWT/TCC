@@ -8,12 +8,13 @@ const userSchema = new Schema(
     tipo: {
       type: String,
       required: true,
-      enum: ["bolsista", "tutor"],
+      enum: ["bolsista", "tutor", "admin"],
       default: "bolsista",
     },
     avatar: { type: String },
     name: { type: String, required: true },
     campus: { type: String, required: true },
+    bolsa: { type: Types.ObjectId, ref: "Bolsa" },
     atividades: [{ type: Types.ObjectId, ref: "Atividade" }],
   },
   { timestamps: true }

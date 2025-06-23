@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Atividade from "@/models/Atividade";
+import User from "@/models/User";
 import dbConnection from "@/lib/mongodb";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(request: Request) {
+  // Qualquer um pode consultar atividades (não precisa de autenticação)
   await dbConnection();
   const { searchParams } = new URL(request.url);
 
@@ -21,20 +24,49 @@ export async function GET(request: Request) {
     filters.datainicio = { $gte: new Date(searchParams.get("datainicio")!) };
   }
 
-  const atividades = await Atividade.find(filters);
+  const atividades = await Atividade.find(filters).populate(
+    "autor",
+    "name email tipo"
+  );
   return NextResponse.json(atividades);
 }
 
-export async function POST(request: Request) {
-  await dbConnection();
-  const data = await request.json();
+export async function POST(request: NextRequest) {
   try {
-    const atividade = await Atividade.create(data);
-    return NextResponse.json(atividade, { status: 201 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 400 }
+    // Apenas usuários autenticados podem criar atividades
+    const authUser = await requireAuth(request);
+    await dbConnection();
+
+    const data = await request.json();
+
+    // Adicionar o autor automaticamente
+    const atividadeData = {
+      ...data,
+      autor: authUser.userId,
+    };
+
+    const atividade = await Atividade.create(atividadeData);
+
+    // Adicionar a atividade à lista do usuário
+    await User.findByIdAndUpdate(authUser.userId, {
+      $push: { atividades: atividade._id },
+    });
+
+    const populatedAtividade = await Atividade.findById(atividade._id).populate(
+      "autor",
+      "name email tipo"
     );
+
+    return NextResponse.json(populatedAtividade, { status: 201 });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro interno";
+    if (
+      errorMessage.includes("não autenticado") ||
+      errorMessage.includes("Permissão")
+    ) {
+      return NextResponse.json({ error: errorMessage }, { status: 401 });
+    }
+    return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }

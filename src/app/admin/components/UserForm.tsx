@@ -8,7 +8,7 @@ interface UserFormData {
   password?: string;
   name: string;
   campus: string;
-  role: string;
+  tipo: string;
 }
 
 interface UserFormProps {
@@ -95,7 +95,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         </Form.Item>
 
         <Form.Item
-          name="role"
+          name="tipo"
           label="Tipo de Usuário"
           rules={[
             {

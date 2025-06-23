@@ -6,6 +6,7 @@ const atividadeSchema = new Schema(
     descricao: { type: String, required: true },
     campus: { type: String, required: true },
     visibilidade: { type: Boolean, required: false },
+    autor: { type: Types.ObjectId, ref: "User", required: true },
     bolsistas: [{ type: Types.ObjectId, ref: "User", required: false }],
     participantes: [{ type: Types.ObjectId, ref: "User", required: false }],
     datainicio: { type: Date, required: false },

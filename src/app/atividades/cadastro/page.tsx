@@ -9,10 +9,12 @@ import {
   Select,
   message,
   Upload,
+  Spin,
 } from "antd";
 import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UploadedFileType {
   fileName: string;
@@ -33,6 +35,37 @@ export default function CadastroAtividade() {
   );
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
+  const { user, hasPermission, loading: authLoading } = useAuth();
+
+  // Verificar autenticação
+  useEffect(() => {
+    if (!authLoading && !user) {
+      message.error("Você precisa estar logado para criar atividades");
+      router.push("/cadastro");
+    } else if (!authLoading && user && !hasPermission("create-activity")) {
+      message.error("Você não tem permissão para criar atividades");
+      router.push("/home");
+    }
+  }, [user, hasPermission, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "50vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!user || !hasPermission("create-activity")) {
+    return null;
+  }
 
   const campusOptions = [
     "Campus I - João Pessoa",
