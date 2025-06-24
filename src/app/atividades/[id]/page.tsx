@@ -310,6 +310,44 @@ export default function DetalhesAtividade() {
           </Text>
         </Card>
 
+        {/* Arquivo Anexado */}
+        {atividade.arquivo && (
+          <Card
+            title={
+              <Space>
+                <FileOutlined />
+                Arquivo Anexado
+              </Space>
+            }
+            style={{
+              marginBottom: 24,
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Row gutter={[16, 16]} align="middle">
+              <Col span={16}>
+                <Space direction="vertical" size="small">
+                  <Text strong>{atividade.arquivo.originalName}</Text>
+                  <Text type="secondary">
+                    Tamanho: {formatFileSize(atividade.arquivo.size)} • Tipo:{" "}
+                    {atividade.arquivo.type}
+                  </Text>
+                </Space>
+              </Col>
+              <Col span={8} style={{ textAlign: "right" }}>
+                <Button
+                  type="primary"
+                  icon={<DownloadOutlined />}
+                  onClick={downloadFile}
+                  size="large"
+                >
+                  Download
+                </Button>
+              </Col>
+            </Row>
+          </Card>
+        )}
+
         {/* Bolsistas e Participantes */}
         <Row gutter={[24, 24]}>
           {/* Bolsistas */}

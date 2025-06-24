@@ -1,3 +1,5 @@
+// src/app/layout.tsx
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -18,10 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ConfigProvider locale={ptBR}>
-      <div className={inter.className}>
-        <ClientLayout>{children}</ClientLayout>
-      </div>
-    </ConfigProvider>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ConfigProvider locale={ptBR}>
+          <ClientLayout>{children}</ClientLayout>
+        </ConfigProvider>
+      </body>
+    </html>
   );
 }
