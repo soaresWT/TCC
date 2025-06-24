@@ -1,6 +1,6 @@
 "use client";
-import React from "react";
-import { Layout, Menu, Button, Avatar, Dropdown } from "antd";
+import React, { useState, useEffect } from "react";
+import { Layout, Menu, Button, Avatar, Dropdown, Drawer } from "antd";
 import {
   UserOutlined,
   HomeOutlined,
@@ -8,6 +8,7 @@ import {
   TeamOutlined,
   LogoutOutlined,
   LoginOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
@@ -20,6 +21,18 @@ export const Header: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout, hasPermission, loading } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const userMenuItems: MenuProps["items"] = [
     {
@@ -65,12 +78,16 @@ export const Header: React.FC = () => {
         items.push({
           key: "admin",
           icon: <TeamOutlined />,
-          label: <Link href="/admin">Gerenciar Usuários</Link>,
+          label: <Link href="/admin">Admin</Link>,
         });
       }
     }
 
     return items;
+  };
+
+  const handleDrawerClose = () => {
+    setMobileMenuOpen(false);
   };
 
   if (loading) {
@@ -95,46 +112,93 @@ export const Header: React.FC = () => {
   }
 
   return (
-    <AntHeader
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 24px",
-        background: "#fff",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div style={{ marginRight: 48 }}>
-          <h1 style={{ margin: 0, fontSize: 20 }}>Sistema de Gestão</h1>
+    <>
+      <AntHeader
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 24px",
+          background: "#fff",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
+          <div style={{ marginRight: isMobile ? 16 : 24 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: isMobile ? 16 : 20,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {isMobile ? "Sistema" : "Sistema de Gestão"}
+            </h1>
+          </div>
+          {!isMobile && (
+            <Menu
+              mode="horizontal"
+              selectedKeys={[pathname]}
+              items={getMenuItems()}
+              style={{
+                border: "none",
+                minWidth: "auto",
+                flex: 1,
+              }}
+              overflowedIndicator={null}
+            />
+          )}
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {isMobile && (
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={() => setMobileMenuOpen(true)}
+            />
+          )}
+
+          {user ? (
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Button
+                type="text"
+                icon={<Avatar src={user.avatar} icon={<UserOutlined />} />}
+              >
+                {isMobile
+                  ? user.name.split(" ")[0]
+                  : `${user.name} (${user.tipo})`}
+              </Button>
+            </Dropdown>
+          ) : (
+            <Button
+              type="primary"
+              icon={<LoginOutlined />}
+              onClick={() => router.push("/cadastro")}
+              size={isMobile ? "small" : "middle"}
+            >
+              Login
+            </Button>
+          )}
+        </div>
+      </AntHeader>
+
+      {/* Menu móvel */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        open={mobileMenuOpen}
+        onClose={handleDrawerClose}
+        width={250}
+      >
         <Menu
-          mode="horizontal"
+          mode="vertical"
           selectedKeys={[pathname]}
           items={getMenuItems()}
           style={{ border: "none" }}
+          onClick={() => setMobileMenuOpen(false)}
         />
-      </div>
-
-      {user ? (
-        <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-          <Button
-            type="text"
-            icon={<Avatar src={user.avatar} icon={<UserOutlined />} />}
-          >
-            {user.name} ({user.tipo})
-          </Button>
-        </Dropdown>
-      ) : (
-        <Button
-          type="primary"
-          icon={<LoginOutlined />}
-          onClick={() => router.push("/cadastro")}
-        >
-          Login
-        </Button>
-      )}
-    </AntHeader>
+      </Drawer>
+    </>
   );
 };

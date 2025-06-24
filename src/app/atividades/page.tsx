@@ -21,6 +21,12 @@ interface Atividade {
   nome: string;
   descricao: string;
   campus: string;
+  categoria: string;
+  quantidadeAlunos?: number;
+  bolsasDisponiveis?: Array<{
+    _id: string;
+    nome: string;
+  }>;
   visibilidade: boolean;
   datainicio?: string;
   createdAt: string;
@@ -44,6 +50,7 @@ export default function AtividadesPage() {
   const [filtros, setFiltros] = useState({
     nome: "",
     campus: "",
+    categoria: "",
     visibilidade: "",
     datainicio: "",
   });
@@ -68,6 +75,8 @@ export default function AtividadesPage() {
     "Campus XV - Esperança",
   ];
 
+  const categoriaOptions = ["Ensino", "Pesquisa", "Extensão", "Outros"];
+
   const fetchAtividades = useCallback(async () => {
     setLoading(true);
     try {
@@ -75,6 +84,7 @@ export default function AtividadesPage() {
 
       if (filtros.nome) queryParams.append("nome", filtros.nome);
       if (filtros.campus) queryParams.append("campus", filtros.campus);
+      if (filtros.categoria) queryParams.append("categoria", filtros.categoria);
       if (filtros.visibilidade)
         queryParams.append("visibilidade", filtros.visibilidade);
       if (filtros.datainicio)
@@ -154,7 +164,7 @@ export default function AtividadesPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               gap: "16px",
             }}
           >
@@ -179,6 +189,22 @@ export default function AtividadesPage() {
               {campusOptions.map((campus) => (
                 <Option key={campus} value={campus}>
                   {campus}
+                </Option>
+              ))}
+            </Select>
+
+            <Select
+              placeholder="Filtrar por categoria"
+              allowClear
+              value={filtros.categoria || undefined}
+              onChange={(value) =>
+                setFiltros({ ...filtros, categoria: value || "" })
+              }
+              style={{ width: "100%" }}
+            >
+              {categoriaOptions.map((categoria) => (
+                <Option key={categoria} value={categoria}>
+                  {categoria}
                 </Option>
               ))}
             </Select>
@@ -256,11 +282,29 @@ export default function AtividadesPage() {
                       <p style={{ marginBottom: "8px" }}>
                         {atividade.descricao}
                       </p>
-                      <Space size="large">
+                      <Space size="large" wrap>
                         <span>
                           <EnvironmentOutlined style={{ marginRight: "4px" }} />
                           {atividade.campus}
                         </span>
+                        <span>
+                          <Tag color="blue">{atividade.categoria}</Tag>
+                        </span>
+                        {atividade.quantidadeAlunos && (
+                          <span style={{ color: "#722ed1" }}>
+                            <UserOutlined style={{ marginRight: "4px" }} />
+                            {atividade.quantidadeAlunos} alunos
+                          </span>
+                        )}
+                        {atividade.bolsasDisponiveis &&
+                          atividade.bolsasDisponiveis.length > 0 && (
+                            <span style={{ color: "#13c2c2" }}>
+                              Bolsas:{" "}
+                              {atividade.bolsasDisponiveis
+                                .map((bolsa) => bolsa.nome)
+                                .join(", ")}
+                            </span>
+                          )}
                         {atividade.datainicio && (
                           <span>
                             <CalendarOutlined style={{ marginRight: "4px" }} />

@@ -23,7 +23,9 @@ export async function GET(
       );
     }
 
-    const atividade = await Atividade.findById(id);
+    const atividade = await Atividade.findById(id)
+      .populate("autor", "name email tipo")
+      .populate("bolsistas", "name email tipo campus bolsa");
 
     if (!atividade) {
       return NextResponse.json(

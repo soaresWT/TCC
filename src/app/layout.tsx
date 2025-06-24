@@ -18,12 +18,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <body className={inter.className}>
-        <ConfigProvider locale={ptBR}>
-          <ClientLayout>{children}</ClientLayout>
-        </ConfigProvider>
-      </body>
-    </html>
+    <ConfigProvider locale={ptBR}>
+      <div className={inter.className}>
+        <ClientLayout>{children}</ClientLayout>
+      </div>
+    </ConfigProvider>
   );
 }

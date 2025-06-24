@@ -17,6 +17,9 @@ export async function GET(request: Request) {
   if (searchParams.has("campus")) {
     filters.campus = searchParams.get("campus");
   }
+  if (searchParams.has("categoria")) {
+    filters.categoria = searchParams.get("categoria");
+  }
   if (searchParams.has("visibilidade")) {
     filters.visibilidade = searchParams.get("visibilidade") === "true";
   }
@@ -24,10 +27,9 @@ export async function GET(request: Request) {
     filters.datainicio = { $gte: new Date(searchParams.get("datainicio")!) };
   }
 
-  const atividades = await Atividade.find(filters).populate(
-    "autor",
-    "name email tipo"
-  );
+  const atividades = await Atividade.find(filters)
+    .populate("autor", "name email tipo")
+    .populate("bolsistas", "name email tipo campus bolsa");
   return NextResponse.json(atividades);
 }
 
@@ -52,10 +54,9 @@ export async function POST(request: NextRequest) {
       $push: { atividades: atividade._id },
     });
 
-    const populatedAtividade = await Atividade.findById(atividade._id).populate(
-      "autor",
-      "name email tipo"
-    );
+    const populatedAtividade = await Atividade.findById(atividade._id)
+      .populate("autor", "name email tipo")
+      .populate("bolsistas", "name email tipo campus bolsa");
 
     return NextResponse.json(populatedAtividade, { status: 201 });
   } catch (error) {

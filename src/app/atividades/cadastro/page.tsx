@@ -10,6 +10,7 @@ import {
   message,
   Upload,
   Spin,
+  InputNumber,
 } from "antd";
 import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
@@ -24,6 +25,18 @@ interface UploadedFileType {
   url: string;
 }
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  tipo: "admin" | "tutor" | "bolsista";
+  campus: string;
+  bolsa?: {
+    _id: string;
+    nome: string;
+  };
+}
+
 const { TextArea } = Input;
 const { Option } = Select;
 
@@ -34,6 +47,8 @@ export default function CadastroAtividade() {
     null
   );
   const [uploading, setUploading] = useState(false);
+  const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const router = useRouter();
   const { user, hasPermission, loading: authLoading } = useAuth();
 
@@ -47,6 +62,48 @@ export default function CadastroAtividade() {
       router.push("/home");
     }
   }, [user, hasPermission, authLoading, router]);
+
+  // Carregar usuários disponíveis para seleção como bolsistas
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      setLoadingUsuarios(true);
+      try {
+        const response = await fetch("/api/users");
+        if (response.ok) {
+          const data = await response.json();
+          // Filtrar apenas bolsistas do mesmo campus (exceto admin que vê todos)
+          const usuariosFiltrados = data.filter((usuario: User) => {
+            if (user?.tipo === "admin") {
+              // Admin vê todos os bolsistas
+              return usuario.tipo === "bolsista";
+            } else if (user?.tipo === "tutor") {
+              // Tutor vê apenas bolsistas da mesma bolsa
+              return (
+                usuario.tipo === "bolsista" &&
+                usuario.bolsa?._id === user.bolsa?._id
+              );
+            } else if (user?.tipo === "bolsista") {
+              // Bolsista vê apenas outros da mesma bolsa
+              return (
+                usuario.tipo === "bolsista" &&
+                usuario.bolsa?._id === user.bolsa?._id
+              );
+            }
+            return false;
+          });
+          setUsuarios(usuariosFiltrados);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar usuários:", error);
+      } finally {
+        setLoadingUsuarios(false);
+      }
+    };
+
+    if (user) {
+      fetchUsuarios();
+    }
+  }, [user]);
 
   if (authLoading) {
     return (
@@ -84,6 +141,8 @@ export default function CadastroAtividade() {
     "Campus XIV - Monteiro",
     "Campus XV - Esperança",
   ];
+
+  const categoriaOptions = ["Ensino", "Pesquisa", "Extensão", "Outros"];
 
   // Função para fazer upload do arquivo
   const handleUpload = async (file: File) => {
@@ -126,6 +185,9 @@ export default function CadastroAtividade() {
     nome: string;
     descricao: string;
     campus: string;
+    categoria: string;
+    quantidadeAlunos?: number;
+    bolsistas?: string[];
     datainicio?: Date;
     visibilidade?: boolean;
     arquivo?: UploadedFileType;
@@ -145,6 +207,7 @@ export default function CadastroAtividade() {
             ? values.datainicio.toISOString()
             : null,
           arquivo: uploadedFile,
+          bolsistas: values.bolsistas || [],
         }),
       });
 
@@ -242,6 +305,63 @@ export default function CadastroAtividade() {
               {campusOptions.map((campus) => (
                 <Option key={campus} value={campus}>
                   {campus}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="Categoria"
+            name="categoria"
+            rules={[
+              {
+                required: true,
+                message: "Por favor, selecione uma categoria!",
+              },
+            ]}
+          >
+            <Select placeholder="Selecione a categoria da atividade">
+              {categoriaOptions.map((categoria) => (
+                <Option key={categoria} value={categoria}>
+                  {categoria}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="Quantidade de Alunos (Opcional)"
+            name="quantidadeAlunos"
+            tooltip="Número esperado de alunos que participarão da atividade"
+          >
+            <InputNumber
+              placeholder="Digite a quantidade de alunos"
+              min={0}
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Bolsistas Participantes (Opcional)"
+            name="bolsistas"
+            tooltip="Selecione os bolsistas que participarão desta atividade"
+          >
+            <Select
+              mode="multiple"
+              placeholder="Selecione os bolsistas participantes"
+              loading={loadingUsuarios}
+              allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string)
+                  ?.toLowerCase()
+                  ?.indexOf(input.toLowerCase()) >= 0
+              }
+            >
+              {usuarios.map((usuario) => (
+                <Option key={usuario._id} value={usuario._id}>
+                  {usuario.name} - {usuario.bolsa?.nome || "Sem bolsa"} (
+                  {usuario.campus})
                 </Option>
               ))}
             </Select>
