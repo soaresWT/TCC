@@ -9,12 +9,13 @@ interface UserFormData {
   name: string;
   campus: string;
   tipo: string;
+  role: string;
 }
 
 interface UserFormProps {
   open: boolean;
   onCancel: () => void;
-  onSubmit: (values: UserFormData) => void;
+  onSubmit: (values: UserFormData) => void | Promise<void>;
   initialValues?: UserFormData;
   loading?: boolean;
   title: string;

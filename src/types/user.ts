@@ -17,4 +17,5 @@ export interface UserFormData {
   name: string;
   campus: string;
   avatar?: string;
+  role: string;
 }

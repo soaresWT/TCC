@@ -181,6 +181,7 @@ export default function AdminPage() {
                   email: selectedUser.email,
                   campus: selectedUser.campus,
                   role: selectedUser.role,
+                  tipo: selectedUser.role,
                 }
               : undefined
           }
