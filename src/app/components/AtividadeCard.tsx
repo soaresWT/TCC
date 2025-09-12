@@ -40,19 +40,39 @@ export default function AtividadeCard({
       onClick={handleCardClick}
       style={{
         cursor: onClick || navigateOnClick ? "pointer" : "default",
-        height: "100%",
+        height: "400px",
+        overflow: "hidden",
+      }}
+      styles={{
+        body: {
+          height: "calc(100% - 60px)",
+          display: "flex",
+          flexDirection: "column",
+        },
       }}
     >
-      <div style={{ marginBottom: 8 }}>
-        <strong>Descrição:</strong> {atividade.descricao}
+      <div style={{ marginBottom: 8, flex: "0 0 auto" }}>
+        <strong>Descrição:</strong>{" "}
+        <div
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            marginTop: 4,
+          }}
+        >
+          {atividade.descricao}
+        </div>
       </div>
 
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: 8, flex: "0 0 auto" }}>
         <strong>Campus:</strong> {atividade.campus}
       </div>
 
       {atividade.categoria && (
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, flex: "0 0 auto" }}>
           <strong>Categoria:</strong>
           <Tag color="orange" style={{ marginLeft: 8 }}>
             {atividade.categoria}
@@ -61,19 +81,19 @@ export default function AtividadeCard({
       )}
 
       {atividade.datainicio && (
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, flex: "0 0 auto" }}>
           <strong>Data de início:</strong>{" "}
           {dayjs(atividade.datainicio).format("DD/MM/YYYY")}
         </div>
       )}
 
       {atividade.quantidadeAlunos && (
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, flex: "0 0 auto" }}>
           <strong>Quantidade de alunos:</strong> {atividade.quantidadeAlunos}
         </div>
       )}
 
-      <div style={{ marginTop: 12 }}>
+      <div style={{ marginTop: "auto", flex: "0 0 auto" }}>
         <Tag color="blue">Bolsistas: {atividade.bolsistas?.length ?? 0}</Tag>
         <Tag color="purple">
           Participantes: {atividade.participantes?.length ?? 0}
