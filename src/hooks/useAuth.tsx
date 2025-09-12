@@ -2,19 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-interface User {
-  _id: string;
-  email: string;
-  name: string;
-  tipo: "admin" | "tutor" | "bolsista";
-  campus: string;
-  bolsa?: {
-    _id: string;
-    nome: string;
-  };
-  avatar?: string;
-}
+import { User } from "@/types/user";
+import { AuthService } from "@/services/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -37,21 +26,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
+      const data = await AuthService.checkAuth();
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.authenticated) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
+      if (data.authenticated && data.user) {
+        setUser(data.user);
       } else {
         setUser(null);
       }
-    } catch {
+    } catch (error) {
+      console.error("Erro ao verificar autenticação:", error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -60,34 +43,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
+      const result = await AuthService.login({ email, password });
 
-      const data = await response.json();
-
-      if (response.ok && data.ok) {
-        setUser(data.user);
+      if (result.success && result.user) {
+        setUser(result.user);
         return { success: true };
       } else {
-        return { success: false, error: data.error || "Erro no login" };
+        return {
+          success: false,
+          error: result.error || "Credenciais inválidas",
+        };
       }
-    } catch {
-      return { success: false, error: "Erro de conexão" };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   };
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      await AuthService.logout();
     } catch {
       // Ignore errors
     } finally {
