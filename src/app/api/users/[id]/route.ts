@@ -12,7 +12,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authUser = await requireAuth(request, "tutor");
+    const authUser = await requireAuth(request);
     await dbConnection();
 
     const { id } = await params;
@@ -27,54 +27,84 @@ export async function PUT(
     }
 
     const isAdminActor = authUser.tipo === "admin";
+    const isTutorActor = authUser.tipo === "tutor";
+    const isSelfUpdate = authUser.userId === user._id.toString();
 
-    if (!isAdminActor) {
-      if (user.tipo === "admin") {
+    if (!isSelfUpdate) {
+      if (!isAdminActor && !isTutorActor) {
         return NextResponse.json(
           { error: "Permissão insuficiente" },
           { status: 403 }
         );
       }
 
-      if (authUser.tipo !== "tutor") {
-        return NextResponse.json(
-          { error: "Permissão insuficiente" },
-          { status: 403 }
-        );
-      }
+      if (!isAdminActor) {
+        if (user.tipo === "admin") {
+          return NextResponse.json(
+            { error: "Permissão insuficiente" },
+            { status: 403 }
+          );
+        }
 
-      if (!authUser.bolsa || user.bolsa?.toString() !== authUser.bolsa) {
-        return NextResponse.json(
-          { error: "Tutores só podem gerenciar usuários da própria bolsa" },
-          { status: 403 }
-        );
-      }
+        if (!authUser.bolsa || user.bolsa?.toString() !== authUser.bolsa) {
+          return NextResponse.json(
+            {
+              error: "Tutores só podem gerenciar usuários da própria bolsa",
+            },
+            { status: 403 }
+          );
+        }
 
-      if (user.tipo !== "bolsista") {
-        return NextResponse.json(
-          { error: "Tutores só podem editar bolsistas" },
-          { status: 403 }
-        );
-      }
+        if (user.tipo !== "bolsista") {
+          return NextResponse.json(
+            { error: "Tutores só podem editar bolsistas" },
+            { status: 403 }
+          );
+        }
 
-      if (payload.tipo && payload.tipo !== "bolsista") {
-        return NextResponse.json(
-          { error: "Tutores não podem alterar o tipo de usuário" },
-          { status: 403 }
-        );
-      }
+        if (payload.tipo && payload.tipo !== "bolsista") {
+          return NextResponse.json(
+            { error: "Tutores não podem alterar o tipo de usuário" },
+            { status: 403 }
+          );
+        }
 
-      if (payload.bolsa && payload.bolsa !== authUser.bolsa) {
-        return NextResponse.json(
-          { error: "Tutores só podem atribuir a própria bolsa" },
-          { status: 403 }
-        );
+        if (payload.bolsa && payload.bolsa !== authUser.bolsa) {
+          return NextResponse.json(
+            { error: "Tutores só podem atribuir a própria bolsa" },
+            { status: 403 }
+          );
+        }
       }
     }
 
-    if (payload.email && payload.email !== user.email) {
+    const updatePayload = { ...payload };
+
+    if (isSelfUpdate && !isAdminActor) {
+      if (updatePayload.tipo && updatePayload.tipo !== user.tipo) {
+        return NextResponse.json(
+          { error: "Não é permitido alterar o tipo de usuário" },
+          { status: 403 }
+        );
+      }
+
+      if (
+        Object.prototype.hasOwnProperty.call(updatePayload, "bolsa") &&
+        updatePayload.bolsa !== (user.bolsa?.toString() ?? undefined)
+      ) {
+        return NextResponse.json(
+          { error: "Não é permitido alterar a bolsa associada" },
+          { status: 403 }
+        );
+      }
+
+      delete (updatePayload as { tipo?: unknown }).tipo;
+      delete (updatePayload as { bolsa?: unknown }).bolsa;
+    }
+
+    if (updatePayload.email && updatePayload.email !== user.email) {
       const emailTaken = await User.exists({
-        email: payload.email,
+        email: updatePayload.email,
         _id: { $ne: user._id },
       });
       if (emailTaken) {
@@ -85,21 +115,25 @@ export async function PUT(
       }
     }
 
-    if (payload.tipo === "admin" && !isAdminActor) {
+    if (updatePayload.tipo === "admin" && !isAdminActor) {
       return NextResponse.json(
         { error: "Permissão insuficiente" },
         { status: 403 }
       );
     }
 
-    if (user.tipo === "admin" && payload.tipo && payload.tipo !== "admin") {
+    if (
+      user.tipo === "admin" &&
+      updatePayload.tipo &&
+      updatePayload.tipo !== "admin"
+    ) {
       return NextResponse.json(
         { error: "Não é possível alterar o tipo do administrador" },
         { status: 400 }
       );
     }
 
-    if (payload.tipo === "admin") {
+    if (updatePayload.tipo === "admin") {
       const existingAdmin = await User.findOne({ tipo: "admin" });
       if (
         existingAdmin &&
@@ -115,32 +149,32 @@ export async function PUT(
     const previousTipo = user.tipo;
     const previousBolsa = user.bolsa?.toString() ?? null;
 
-    if (payload.name !== undefined) {
-      user.name = payload.name;
+    if (updatePayload.name !== undefined) {
+      user.name = updatePayload.name;
     }
-    if (payload.email !== undefined) {
-      user.email = payload.email;
+    if (updatePayload.email !== undefined) {
+      user.email = updatePayload.email;
     }
-    if (payload.campus !== undefined) {
-      user.campus = payload.campus;
+    if (updatePayload.campus !== undefined) {
+      user.campus = updatePayload.campus;
     }
-    if (payload.tipo !== undefined) {
-      user.tipo = payload.tipo;
+    if (updatePayload.tipo !== undefined) {
+      user.tipo = updatePayload.tipo;
     }
-    if (payload.avatar !== undefined) {
-      user.avatar = payload.avatar;
+    if (updatePayload.avatar !== undefined) {
+      user.avatar = updatePayload.avatar;
     }
-    if (payload.bolsa !== undefined) {
-      user.bolsa = payload.bolsa || undefined;
+    if (updatePayload.bolsa !== undefined) {
+      user.bolsa = updatePayload.bolsa || undefined;
     }
-    if (payload.password) {
-      if (String(payload.password).length < 6) {
+    if (updatePayload.password) {
+      if (String(updatePayload.password).length < 6) {
         return NextResponse.json(
           { error: "A senha deve ter no mínimo 6 caracteres" },
           { status: 400 }
         );
       }
-      user.password = payload.password;
+      user.password = updatePayload.password;
     }
 
     await user.save();
