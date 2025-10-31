@@ -7,18 +7,15 @@ import Bolsa from "@/models/Bolsa";
 
 initDatabase().catch(console.error);
 
-type RouteParams = {
-  params: {
-    id: string;
-  };
-};
-
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authUser = await requireAuth(request, "tutor");
     await dbConnection();
 
-    const { id } = params;
+    const { id } = await params;
     const payload = await request.json();
 
     const user = await User.findById(id);
@@ -177,12 +174,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authUser = await requireAuth(request, "tutor");
     await dbConnection();
 
-    const { id } = params;
+    const { id } = await params;
     const user = await User.findById(id);
 
     if (!user) {
