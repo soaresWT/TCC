@@ -47,6 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (result.success && result.user) {
         setUser(result.user);
+
+        // Redirecionar baseado no tipo de usuário
+        if (result.user.tipo === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/home");
+        }
+
         return { success: true };
       } else {
         return {

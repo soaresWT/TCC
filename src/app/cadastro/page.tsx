@@ -33,7 +33,11 @@ export default function CadastroUsuario() {
   // Redirecionar se já estiver logado
   useEffect(() => {
     if (user) {
-      router.push("/home");
+      if (user.tipo === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/home");
+      }
     }
   }, [user, router]);
 
@@ -58,9 +62,7 @@ export default function CadastroUsuario() {
 
       // Tentar fazer login automaticamente
       const loginResult = await login(values.email, values.password);
-      if (loginResult.success) {
-        router.push("/home");
-      } else {
+      if (!loginResult.success) {
         message.info("Usuário criado! Faça login para continuar.");
       }
     } catch (error) {
@@ -76,7 +78,7 @@ export default function CadastroUsuario() {
       const result = await login(values.email, values.password);
       if (result.success) {
         message.success("Login realizado com sucesso!");
-        router.push("/home");
+        // O redirecionamento agora é feito automaticamente pelo hook useAuth
       } else {
         message.error(result.error || "Erro no login");
       }

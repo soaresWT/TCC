@@ -76,7 +76,15 @@ export default function Home() {
     categoria: "",
   });
   const router = useRouter();
-  const { hasPermission, user } = useAuth();
+  const { hasPermission, user, loading: authLoading } = useAuth();
+
+  // Redirecionar usuários não autenticados para a página de cadastro/login
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/cadastro");
+      return;
+    }
+  }, [user, authLoading, router]);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastElementRef = useRef<HTMLDivElement>(null);
 
@@ -414,6 +422,27 @@ export default function Home() {
   );
 
   const stats = getStats();
+
+  // Não renderizar nada se o usuário não estiver autenticado
+  if (!user && !authLoading) {
+    return null;
+  }
+
+  // Mostrar loading durante verificação de autenticação
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "50vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
     <div

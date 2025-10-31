@@ -1,22 +1,19 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Input, Select, Button, Modal } from "antd";
+import type { UserFormData } from "@/types/user";
 
 const { Option } = Select;
 
-interface UserFormData {
-  email: string;
-  password?: string;
-  name: string;
-  campus: string;
-  tipo: string;
-  role: string;
-}
+type UserFormValues = Pick<
+  UserFormData,
+  "email" | "password" | "name" | "campus" | "tipo"
+>;
 
 interface UserFormProps {
   open: boolean;
   onCancel: () => void;
-  onSubmit: (values: UserFormData) => void | Promise<void>;
-  initialValues?: UserFormData;
+  onSubmit: (values: UserFormValues) => void | Promise<void>;
+  initialValues?: UserFormValues;
   loading?: boolean;
   title: string;
 }
@@ -31,7 +28,23 @@ export const UserForm: React.FC<UserFormProps> = ({
 }) => {
   const [form] = Form.useForm();
 
-  const handleSubmit = async (values: UserFormData) => {
+  useEffect(() => {
+    if (!open) {
+      form.resetFields();
+      return;
+    }
+
+    const defaultValues: Partial<UserFormValues> = {
+      tipo: "bolsista",
+    };
+
+    form.setFieldsValue({
+      ...defaultValues,
+      ...initialValues,
+    });
+  }, [open, initialValues, form]);
+
+  const handleSubmit = async (values: UserFormValues) => {
     await onSubmit(values);
     form.resetFields();
   };

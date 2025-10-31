@@ -12,19 +12,19 @@ export interface User {
   atividades?: string[];
   createdAt: string;
   updatedAt: string;
-  role?: string;
 }
 
 export interface UserFormData {
   email: string;
-  password: string;
+  password?: string;
   tipo: "admin" | "tutor" | "bolsista";
   name: string;
   campus: string;
   avatar?: string;
-  bolsa?: string;
-  role?: string;
+  bolsa?: string | null;
 }
+
+export type CreateUserPayload = UserFormData & { password: string };
 
 export interface UserProfile {
   _id: string;
