@@ -22,6 +22,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.548.0",
     "mongoose": "^8.15.0",
     "next": "15.3.2",
     "next-auth": "^4.24.11",

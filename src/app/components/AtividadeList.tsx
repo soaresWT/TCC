@@ -24,10 +24,10 @@ export default function AtividadeList({
   cardProps = { xs: 24, sm: 12, md: 8, lg: 6 },
 }: AtividadeListProps) {
   return (
-    <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+    <Row gutter={[24, 24]} style={{ marginTop: 24, width: "100%" }}>
       {atividades.length === 0 && !loading && (
         <Col span={24}>
-          <Empty description={emptyMessage} />
+          <Empty description={emptyMessage} style={{ padding: "48px 0" }} />
         </Col>
       )}
       {atividades.map((atividade) => (
