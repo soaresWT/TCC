@@ -1,66 +1,66 @@
-import { User, UserFormData } from "@/types/user";
-import { ApiResponse } from "@/types/api";
+import { CreateUserPayload, User, UserFormData } from "@/types/user";
 
 export class UserService {
   private static baseUrl = "/api/users";
 
-  static async getUsers(): Promise<User[]> {
-    const response = await fetch(this.baseUrl);
+  private static async request<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const response = await fetch(url, options);
+    const contentType = response.headers.get("content-type") || "";
+    const isJson = contentType.includes("application/json");
+    const data = isJson ? await response.json() : await response.text();
 
     if (!response.ok) {
-      throw new Error("Erro ao carregar usuários");
+      const errorMessage =
+        typeof data === "object" && data !== null && "error" in data
+          ? String((data as { error?: unknown }).error)
+          : "Erro ao processar requisição";
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    return data as T;
   }
 
-  static async createUser(userData: UserFormData): Promise<ApiResponse<User>> {
-    const response = await fetch(this.baseUrl, {
+  static async getUsers(): Promise<User[]> {
+    return this.request<User[]>(this.baseUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  static async createUser(userData: CreateUserPayload): Promise<User> {
+    return this.request<User>(this.baseUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(userData),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Erro ao criar usuário");
-    }
-
-    return data;
   }
 
   static async updateUser(
     id: string,
     userData: Partial<UserFormData>
-  ): Promise<ApiResponse<User>> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
+  ): Promise<User> {
+    return this.request<User>(`${this.baseUrl}/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(userData),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Erro ao atualizar usuário");
-    }
-
-    return data;
   }
 
   static async deleteUser(id: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
+    await this.request(`${this.baseUrl}/${id}`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || "Erro ao deletar usuário");
-    }
   }
 }

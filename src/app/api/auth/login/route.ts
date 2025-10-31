@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const { password: _, ...userData } = user.toObject();
 
   const response = NextResponse.json({
-    ok: true,
+    success: true,
     user: userData,
     token,
   });

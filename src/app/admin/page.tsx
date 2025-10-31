@@ -1,159 +1,189 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Table, Button, Space, Typography, Card, message, Tag } from "antd";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Table,
+  Button,
+  Space,
+  Typography,
+  Card,
+  message,
+  Tag,
+  Modal,
+} from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { PlusOutlined } from "@ant-design/icons";
 import { UserForm } from "./components/UserForm";
+import { UserService } from "@/services/user";
+import type { CreateUserPayload, User, UserFormData } from "@/types/user";
 
 const { Title } = Typography;
 
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  campus: string;
-  createdAt: string;
-}
-
-interface UserFormData {
-  email: string;
-  password?: string;
-  name: string;
-  campus: string;
-  role: string;
-}
+type FormValues = Pick<
+  UserFormData,
+  "email" | "name" | "campus" | "tipo" | "password"
+>;
 
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [formLoading, setFormLoading] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await fetch("/api/users");
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+      const data = await UserService.getUsers();
       setUsers(data);
     } catch (error) {
-      console.log(error);
-      message.error("Erro ao carregar usuários");
+      const messageText =
+        error instanceof Error ? error.message : String(error);
+      message.error(messageText || "Erro ao carregar usuários");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
+  }, [fetchUsers]);
+
+  const handleModalClose = useCallback(() => {
+    setModalOpen(false);
+    setSelectedUser(null);
   }, []);
 
-  const handleSubmit = async (values: UserFormData) => {
-    setFormLoading(true);
-    try {
-      const url = selectedUser
-        ? `/api/users/${selectedUser._id}`
-        : "/api/users";
+  const handleSubmit = useCallback(
+    async (values: FormValues) => {
+      setFormLoading(true);
+      try {
+        if (selectedUser) {
+          await UserService.updateUser(selectedUser._id, values);
+          message.success("Usuário atualizado com sucesso!");
+        } else {
+          if (!values.password) {
+            throw new Error("A senha é obrigatória para novos usuários");
+          }
+          const payload: CreateUserPayload = {
+            ...values,
+            password: values.password,
+          };
+          await UserService.createUser(payload);
+          message.success("Usuário cadastrado com sucesso!");
+        }
 
-      const method = selectedUser ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao processar usuário");
+        handleModalClose();
+        await fetchUsers();
+      } catch (error) {
+        const messageText =
+          error instanceof Error ? error.message : String(error);
+        message.error(messageText || "Erro ao processar usuário");
+      } finally {
+        setFormLoading(false);
       }
+    },
+    [fetchUsers, handleModalClose, selectedUser]
+  );
 
-      message.success(
-        selectedUser
-          ? "Usuário atualizado com sucesso!"
-          : "Usuário cadastrado com sucesso!"
-      );
-
-      setModalOpen(false);
-      fetchUsers();
-    } catch (error) {
-      message.error((error as Error).message);
-    } finally {
-      setFormLoading(false);
-      setSelectedUser(null);
-    }
-  };
-
-  const handleEdit = (user: User) => {
+  const handleEdit = useCallback((user: User) => {
     setSelectedUser(user);
     setModalOpen(true);
-  };
+  }, []);
 
-  const columns = [
-    {
-      title: "Nome",
-      dataIndex: "name",
-      key: "name",
+  const handleDelete = useCallback(
+    (user: User) => {
+      Modal.confirm({
+        title: `Excluir ${user.name}?`,
+        content: "Esta ação não pode ser desfeita.",
+        okText: "Excluir",
+        okButtonProps: { danger: true },
+        cancelText: "Cancelar",
+        onOk: async () => {
+          try {
+            await UserService.deleteUser(user._id);
+            message.success("Usuário removido com sucesso!");
+            await fetchUsers();
+          } catch (error) {
+            const messageText =
+              error instanceof Error ? error.message : String(error);
+            message.error(messageText || "Erro ao remover usuário");
+          }
+        },
+      });
     },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Tipo",
-      dataIndex: "role",
-      key: "role",
-      render: (role: string) => {
-        return <Tag color="blue">{role}</Tag>;
+    [fetchUsers]
+  );
+
+  const columns: ColumnsType<User> = useMemo(
+    () => [
+      {
+        title: "Nome",
+        dataIndex: "name",
+        key: "name",
       },
-    },
-    {
-      title: "Campus",
-      dataIndex: "campus",
-      key: "campus",
-    },
-    {
-      title: "Data de Cadastro",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date: string) => new Date(date).toLocaleDateString("pt-BR"),
-    },
-    {
-      title: "Ações",
-      key: "actions",
-      render: (_: unknown, record: User) => (
-        <Space>
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Editar
-          </Button>
-          <Button type="link" danger>
-            Excluir
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+      {
+        title: "Email",
+        dataIndex: "email",
+        key: "email",
+      },
+      {
+        title: "Tipo",
+        dataIndex: "tipo",
+        key: "tipo",
+        render: (tipo: User["tipo"]) => {
+          const colorMap: Record<User["tipo"], string> = {
+            admin: "red",
+            tutor: "blue",
+            bolsista: "green",
+          };
+          const label = `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)}`;
+          return <Tag color={colorMap[tipo]}>{label}</Tag>;
+        },
+      },
+      {
+        title: "Campus",
+        dataIndex: "campus",
+        key: "campus",
+      },
+      {
+        title: "Data de Cadastro",
+        dataIndex: "createdAt",
+        key: "createdAt",
+        render: (date: string) => new Date(date).toLocaleDateString("pt-BR"),
+      },
+      {
+        title: "Ações",
+        key: "actions",
+        render: (_: unknown, record: User) => (
+          <Space>
+            <Button type="link" onClick={() => handleEdit(record)}>
+              Editar
+            </Button>
+            <Button type="link" danger onClick={() => handleDelete(record)}>
+              Excluir
+            </Button>
+          </Space>
+        ),
+      },
+    ],
+    [handleDelete, handleEdit]
+  );
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 16,
-          }}
-        >
-          <Title level={2}>Gerenciamento de Usuários</Title>
+    <div className="px-6 py-8">
+      <Card className="shadow-sm">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <Title level={2} className="!mb-0">
+            Gerenciamento de Usuários
+          </Title>
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => setModalOpen(true)}
+            onClick={() => {
+              setSelectedUser(null);
+              setModalOpen(true);
+            }}
           >
             Adicionar Usuário
           </Button>
@@ -164,15 +194,12 @@ export default function AdminPage() {
           dataSource={users}
           rowKey="_id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 10, showSizeChanger: false }}
         />
 
         <UserForm
           open={modalOpen}
-          onCancel={() => {
-            setModalOpen(false);
-            setSelectedUser(null);
-          }}
+          onCancel={handleModalClose}
           onSubmit={handleSubmit}
           initialValues={
             selectedUser
@@ -180,8 +207,7 @@ export default function AdminPage() {
                   name: selectedUser.name,
                   email: selectedUser.email,
                   campus: selectedUser.campus,
-                  role: selectedUser.role,
-                  tipo: selectedUser.role,
+                  tipo: selectedUser.tipo,
                 }
               : undefined
           }
