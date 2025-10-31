@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User } from "@/types/user";
+import { User, UserFormData } from "@/types/user";
+import { UserService } from "@/services/user";
 import { Table, Button, Modal, Form, Input, Select, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 
@@ -17,8 +18,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/users");
-      const data = await response.json();
+      const data = await UserService.getUsers();
       setUsers(data);
     } catch {
       message.error("Erro ao carregar usuários");
@@ -27,29 +27,15 @@ export default function UsersPage() {
     }
   };
 
-  const handleSubmit = async (values: {
-    email: string;
-    password: string;
-    name: string;
-    tipo: string;
-    campus: string;
-    bolsa?: string;
-  }) => {
+  const handleSubmit = async (values: UserFormData) => {
     try {
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) throw new Error("Erro ao criar usuário");
-
+      await UserService.createUser(values);
       message.success("Usuário criado com sucesso!");
       setIsModalOpen(false);
       form.resetFields();
       fetchUsers();
-    } catch {
-      message.error("Erro ao criar usuário");
+    } catch (error) {
+      message.error((error as Error).message);
     }
   };
 

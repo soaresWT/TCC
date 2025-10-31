@@ -13,25 +13,13 @@ import {
 } from "antd";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { UserForm, LoginForm } from "@/types/forms/auth";
+import { Bolsa } from "@/types/bolsa";
+import { AuthService, BolsaService } from "@/services";
 
 const { Title } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
-
-interface UserForm {
-  email: string;
-  password: string;
-  name: string;
-  campus: string;
-  tipo: string;
-  avatar?: string;
-  bolsa?: string;
-}
-
-interface LoginForm {
-  email: string;
-  password: string;
-}
 
 export default function CadastroUsuario() {
   const [form] = Form.useForm();
@@ -39,7 +27,7 @@ export default function CadastroUsuario() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
-  const [bolsas, setBolsas] = useState([]);
+  const [bolsas, setBolsas] = useState<Bolsa[]>([]);
   const { user, login } = useAuth();
 
   // Redirecionar se já estiver logado
@@ -53,11 +41,8 @@ export default function CadastroUsuario() {
   useEffect(() => {
     const fetchBolsas = async () => {
       try {
-        const response = await fetch("/api/bolsas");
-        if (response.ok) {
-          const data = await response.json();
-          setBolsas(data);
-        }
+        const data = await BolsaService.getBolsas();
+        setBolsas(data);
       } catch (error) {
         console.error("Erro ao carregar bolsas:", error);
       }
@@ -68,20 +53,7 @@ export default function CadastroUsuario() {
   const onFinish = async (values: UserForm) => {
     setLoading(true);
     try {
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao cadastrar usuário");
-      }
-
+      await AuthService.register(values);
       message.success("Usuário cadastrado com sucesso!");
 
       // Tentar fazer login automaticamente
@@ -243,7 +215,7 @@ export default function CadastroUsuario() {
 
               <Form.Item name="bolsa" label="Bolsa (opcional)">
                 <Select placeholder="Selecione a bolsa" allowClear>
-                  {bolsas.map((bolsa: { _id: string; nome: string }) => (
+                  {bolsas.map((bolsa) => (
                     <Option key={bolsa._id} value={bolsa._id}>
                       {bolsa.nome}
                     </Option>
