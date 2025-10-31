@@ -31,6 +31,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import CAMPUSES from "@/lib/campuses";
 
 const { Search } = Input;
 const { Option } = Select;
@@ -90,23 +91,7 @@ export default function Home() {
 
   const ITEMS_PER_PAGE = 10;
 
-  const campusOptions = [
-    "Campus I - João Pessoa",
-    "Campus II - Areia",
-    "Campus III - Bananeiras",
-    "Campus IV - Rio Tinto",
-    "Campus V - Mamanguape",
-    "Campus VI - Sousa",
-    "Campus VII - Patos",
-    "Campus VIII - Cajazeiras",
-    "Campus IX - Pombal",
-    "Campus X - Guarabira",
-    "Campus XI - Princesa Isabel",
-    "Campus XII - Catolé do Rocha",
-    "Campus XIII - Picuí",
-    "Campus XIV - Monteiro",
-    "Campus XV - Esperança",
-  ];
+  const campusOptions = CAMPUSES;
 
   const categoriaOptions = ["Ensino", "Pesquisa", "Extensão", "Outros"];
 

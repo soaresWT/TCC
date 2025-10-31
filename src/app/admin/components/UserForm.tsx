@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Form, Input, Select, Button, Modal } from "antd";
 import type { UserFormData } from "@/types/user";
+import CAMPUSES from "@/lib/campuses";
 
 const { Option } = Select;
 
@@ -36,6 +37,7 @@ export const UserForm: React.FC<UserFormProps> = ({
 
     const defaultValues: Partial<UserFormValues> = {
       tipo: "bolsista",
+      campus: "Campus de Quixadá",
     };
 
     form.setFieldsValue({
@@ -102,9 +104,11 @@ export const UserForm: React.FC<UserFormProps> = ({
           rules={[{ required: true, message: "Por favor, selecione o campus" }]}
         >
           <Select placeholder="Selecione o campus">
-            <Option value="Centro">Centro</Option>
-            <Option value="Cajazeiras">Cajazeiras</Option>
-            <Option value="Mangabeira">Mangabeira</Option>
+            {CAMPUSES.map((c) => (
+              <Option key={c} value={c}>
+                {c}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
 

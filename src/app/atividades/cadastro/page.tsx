@@ -16,6 +16,7 @@ import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import CAMPUSES from "@/lib/campuses";
 
 interface UploadedFileType {
   fileName: string;
@@ -124,23 +125,7 @@ export default function CadastroAtividade() {
     return null;
   }
 
-  const campusOptions = [
-    "Campus I - João Pessoa",
-    "Campus II - Areia",
-    "Campus III - Bananeiras",
-    "Campus IV - Rio Tinto",
-    "Campus V - Mamanguape",
-    "Campus VI - Sousa",
-    "Campus VII - Patos",
-    "Campus VIII - Cajazeiras",
-    "Campus IX - Pombal",
-    "Campus X - Guarabira",
-    "Campus XI - Princesa Isabel",
-    "Campus XII - Catolé do Rocha",
-    "Campus XIII - Picuí",
-    "Campus XIV - Monteiro",
-    "Campus XV - Esperança",
-  ];
+  const campusOptions = CAMPUSES;
 
   const categoriaOptions = ["Ensino", "Pesquisa", "Extensão", "Outros"];
 
@@ -292,6 +277,7 @@ export default function CadastroAtividade() {
             rules={[
               { required: true, message: "Por favor, selecione um campus!" },
             ]}
+            initialValue="Campus de Quixadá"
           >
             <Select
               placeholder="Selecione o campus"
