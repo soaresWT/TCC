@@ -234,11 +234,11 @@ export const Header: React.FC = () => {
 
   const dropdownMenu: MenuProps = {
     items: [
-      {
-        key: "profile",
-        icon: <UserRound size={16} strokeWidth={1.6} />,
-        label: "Meu Perfil",
-      },
+      // {
+      //   key: "profile",
+      //   icon: <UserRound size={16} strokeWidth={1.6} />,
+      //   label: "Meu Perfil",
+      // },
       {
         key: "settings",
         icon: <Settings2 size={16} strokeWidth={1.6} />,
