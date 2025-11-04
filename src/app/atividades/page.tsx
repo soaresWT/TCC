@@ -63,12 +63,13 @@ export default function AtividadesPage() {
   };
 
   const handleClearFilters = () => {
-    setFiltros({
+    const clearedFilters: AtividadeFilters = {
       nome: "",
       campus: "",
       visibilidade: undefined,
       datainicio: undefined,
-    });
+    };
+    setFiltros(clearedFilters);
   };
 
   const handleAtividadeClick = (atividade: Atividade) => {

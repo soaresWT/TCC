@@ -24,7 +24,17 @@ export async function GET(request: Request) {
     filters.visibilidade = searchParams.get("visibilidade") === "true";
   }
   if (searchParams.has("datainicio")) {
-    filters.datainicio = { $gte: new Date(searchParams.get("datainicio")!) };
+    const dataInicio = new Date(searchParams.get("datainicio")!);
+    // Criar range de um dia completo (00:00 até 23:59:59)
+    const startOfDay = new Date(dataInicio);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(dataInicio);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    filters.datainicio = {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    };
   }
 
   const atividades = await Atividade.find(filters)
