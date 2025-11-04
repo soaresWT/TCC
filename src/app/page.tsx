@@ -604,10 +604,10 @@ export default function Home() {
               ))}
             </Select>
           </div>
-          
+
           <div style={{ display: "flex", gap: "8px" }}>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<SearchOutlined />}
               onClick={() => {
                 setLoading(true);
@@ -619,7 +619,7 @@ export default function Home() {
             >
               Buscar
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 setFiltros({
                   nome: "",
