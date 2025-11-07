@@ -25,11 +25,18 @@ import {
   EditOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useRouter, useParams } from "next/navigation";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
+
+const avaliacaoColorMap: Record<string, string> = {
+  Plena: "green",
+  Parcial: "blue",
+  "Não desenvolvida": "red",
+};
 
 interface Usuario {
   _id: string;
@@ -52,6 +59,14 @@ interface Atividade {
   campus: string;
   visibilidade: boolean;
   datainicio?: string;
+  datafim?: string;
+  categoria?: string;
+  avaliacao?: "Plena" | "Parcial" | "Não desenvolvida";
+  cargaHoraria?: number;
+  materialUtilizado?: string;
+  relatoAvaliacao?: string;
+  metodologiaUtilizada?: string;
+  resultados?: string;
   arquivo?: Arquivo;
   bolsistas: Usuario[];
   participantes: Usuario[];
@@ -125,6 +140,36 @@ export default function DetalhesAtividade() {
   const formatFileSize = (bytes: number) => {
     return (bytes / 1024 / 1024).toFixed(2) + " MB";
   };
+
+  const textSections = atividade
+    ? (
+        [
+          {
+            key: "materialUtilizado",
+            title: "Material Utilizado",
+            content: atividade.materialUtilizado,
+          },
+          {
+            key: "relatoAvaliacao",
+            title: "Relato/Avaliação (Resumo Detalhado da Atividade)",
+            content: atividade.relatoAvaliacao,
+          },
+          {
+            key: "metodologiaUtilizada",
+            title: "Metodologia Utilizada",
+            content: atividade.metodologiaUtilizada,
+          },
+          {
+            key: "resultados",
+            title: "Resultados",
+            content: atividade.resultados,
+          },
+        ] as Array<{ key: string; title: string; content?: string }>
+      ).filter((section) => {
+        if (!section.content) return false;
+        return section.content.trim().length > 0;
+      })
+    : [];
 
   if (loading) {
     return (
@@ -244,6 +289,44 @@ export default function DetalhesAtividade() {
                   </Descriptions.Item>
                 )}
 
+                {atividade.datafim && (
+                  <Descriptions.Item
+                    label={
+                      <Space>
+                        <CalendarOutlined />
+                        Data de Fim
+                      </Space>
+                    }
+                  >
+                    {dayjs(atividade.datafim).format("DD/MM/YYYY")}
+                  </Descriptions.Item>
+                )}
+
+                {atividade.avaliacao && (
+                  <Descriptions.Item label="Avaliação">
+                    <Tag
+                      color={
+                        avaliacaoColorMap[atividade.avaliacao] ?? "default"
+                      }
+                    >
+                      {atividade.avaliacao}
+                    </Tag>
+                  </Descriptions.Item>
+                )}
+
+                {atividade.cargaHoraria && (
+                  <Descriptions.Item
+                    label={
+                      <Space>
+                        <ClockCircleOutlined />
+                        Carga Horária
+                      </Space>
+                    }
+                  >
+                    {atividade.cargaHoraria} horas
+                  </Descriptions.Item>
+                )}
+
                 <Descriptions.Item label="Visibilidade">
                   <Tag color={atividade.visibilidade ? "green" : "orange"}>
                     {atividade.visibilidade ? "Pública" : "Privada"}
@@ -309,6 +392,27 @@ export default function DetalhesAtividade() {
             {atividade.descricao}
           </Text>
         </Card>
+
+        {textSections.map((section) => (
+          <Card
+            key={section.key}
+            title={section.title}
+            style={{
+              marginBottom: 24,
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Text
+              style={{
+                whiteSpace: "pre-wrap",
+                fontSize: 16,
+                lineHeight: 1.6,
+              }}
+            >
+              {section.content ?? ""}
+            </Text>
+          </Card>
+        ))}
 
         {/* Arquivo Anexado */}
         {atividade.arquivo && (
