@@ -22,7 +22,6 @@ import {
   CalendarRange,
   ShieldCheck,
   Menu as MenuIcon,
-  UserRound,
   Settings2,
   LogOut,
   LogIn,
