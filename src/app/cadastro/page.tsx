@@ -13,6 +13,7 @@ import {
 } from "antd";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import CAMPUSES from "@/lib/campuses";
 import { UserForm, LoginForm } from "@/types/forms/auth";
 import { Bolsa } from "@/types/bolsa";
 import { AuthService, BolsaService } from "@/services";
@@ -190,11 +191,14 @@ export default function CadastroUsuario() {
                 rules={[
                   { required: true, message: "Por favor, selecione o campus" },
                 ]}
+                initialValue="Campus de Quixadá"
               >
                 <Select placeholder="Selecione o campus">
-                  <Option value="Centro">Centro</Option>
-                  <Option value="Cajazeiras">Cajazeiras</Option>
-                  <Option value="Mangabeira">Mangabeira</Option>
+                  {CAMPUSES.map((c) => (
+                    <Option key={c} value={c}>
+                      {c}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
 

@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Button, message, Card } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Button, message, Card, Typography } from "antd";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Atividade } from "@/types/atividade";
 import { AtividadeList, AtividadeSearchForm } from "@/app/components";
 import type { AtividadeFilters } from "@/app/components/AtividadeSearchForm";
+
+const { Title, Text } = Typography;
 
 export default function AtividadesPage() {
   const [atividades, setAtividades] = useState<Atividade[]>([]);
@@ -61,12 +63,13 @@ export default function AtividadesPage() {
   };
 
   const handleClearFilters = () => {
-    setFiltros({
+    const clearedFilters: AtividadeFilters = {
       nome: "",
       campus: "",
       visibilidade: undefined,
       datainicio: undefined,
-    });
+    };
+    setFiltros(clearedFilters);
   };
 
   const handleAtividadeClick = (atividade: Atividade) => {
@@ -76,29 +79,44 @@ export default function AtividadesPage() {
   return (
     <div
       style={{
-        padding: "24px",
-        backgroundColor: "#f5f5f5",
+        padding: "48px 24px 64px",
+        background: "linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)",
         minHeight: "100vh",
       }}
     >
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
+        }}
+      >
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "24px",
+            alignItems: "flex-end",
+            gap: 16,
           }}
         >
-          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "bold" }}>
-            Atividades
-          </h1>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <Title level={2} style={{ margin: 0 }}>
+              Atividades
+            </Title>
+            <Text type="secondary">
+              Acompanhe iniciativas, participantes e cronogramas em um único
+              lugar.
+            </Text>
+          </div>
           {hasPermission("create-activity") && (
             <Button
               type="primary"
-              icon={<PlusOutlined />}
+              icon={<Plus size={18} strokeWidth={1.6} />}
               onClick={() => router.push("/atividades/cadastro")}
               size="large"
+              style={{ borderRadius: 999 }}
             >
               Nova Atividade
             </Button>
@@ -106,7 +124,13 @@ export default function AtividadesPage() {
         </div>
 
         {/* Filtros */}
-        <Card style={{ marginBottom: "24px" }}>
+        <Card
+          style={{
+            borderRadius: 18,
+            boxShadow: "0 18px 40px rgba(15, 23, 42, 0.08)",
+          }}
+          bodyStyle={{ padding: "24px 24px 8px" }}
+        >
           <AtividadeSearchForm
             filters={filtros}
             loading={loading}

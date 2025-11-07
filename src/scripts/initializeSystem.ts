@@ -19,7 +19,7 @@ export async function createDefaultAdmin() {
       password: "admin123", // Será hasheada automaticamente pelo middleware
       name: "Administrador do Sistema",
       tipo: "admin",
-      campus: "Campus I - João Pessoa",
+      campus: "Campus de Quixadá",
     });
 
     console.log("Usuário admin criado com sucesso:", adminUser.email);

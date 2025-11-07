@@ -31,6 +31,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { CAMPUSES } from "@/lib/campuses";
 
 const { Search } = Input;
 const { Option } = Select;
@@ -89,24 +90,6 @@ export default function Home() {
   const lastElementRef = useRef<HTMLDivElement>(null);
 
   const ITEMS_PER_PAGE = 10;
-
-  const campusOptions = [
-    "Campus I - João Pessoa",
-    "Campus II - Areia",
-    "Campus III - Bananeiras",
-    "Campus IV - Rio Tinto",
-    "Campus V - Mamanguape",
-    "Campus VI - Sousa",
-    "Campus VII - Patos",
-    "Campus VIII - Cajazeiras",
-    "Campus IX - Pombal",
-    "Campus X - Guarabira",
-    "Campus XI - Princesa Isabel",
-    "Campus XII - Catolé do Rocha",
-    "Campus XIII - Picuí",
-    "Campus XIV - Monteiro",
-    "Campus XV - Esperança",
-  ];
 
   const categoriaOptions = ["Ensino", "Pesquisa", "Extensão", "Outros"];
 
@@ -571,6 +554,7 @@ export default function Home() {
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               gap: "16px",
+              marginBottom: "16px",
             }}
           >
             <Search
@@ -589,7 +573,7 @@ export default function Home() {
             />
 
             <Select
-              placeholder="Filtrar por campus"
+              placeholder="Selecionar campus"
               allowClear
               value={filtros.campus || undefined}
               onChange={(value) =>
@@ -597,7 +581,7 @@ export default function Home() {
               }
               style={{ width: "100%" }}
             >
-              {campusOptions.map((campus) => (
+              {CAMPUSES.map((campus) => (
                 <Option key={campus} value={campus}>
                   {campus}
                 </Option>
@@ -605,7 +589,7 @@ export default function Home() {
             </Select>
 
             <Select
-              placeholder="Filtrar por categoria"
+              placeholder="Selecionar categoria"
               allowClear
               value={filtros.categoria || undefined}
               onChange={(value) =>
@@ -619,6 +603,38 @@ export default function Home() {
                 </Option>
               ))}
             </Select>
+          </div>
+
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              onClick={() => {
+                setLoading(true);
+                setPage(1);
+                setAtividades([]);
+                setHasMore(true);
+                fetchAtividades(true);
+              }}
+            >
+              Buscar
+            </Button>
+            <Button
+              onClick={() => {
+                setFiltros({
+                  nome: "",
+                  campus: "",
+                  categoria: "",
+                });
+                setLoading(true);
+                setPage(1);
+                setAtividades([]);
+                setHasMore(true);
+                fetchAtividades(true);
+              }}
+            >
+              Limpar Filtros
+            </Button>
           </div>
         </Card>
 
