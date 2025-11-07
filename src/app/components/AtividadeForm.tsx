@@ -34,8 +34,15 @@ type AtividadeFormValues = {
   quantidadeAlunos?: number;
   bolsistas?: string[];
   datainicio?: Dayjs;
+  datafim?: Dayjs;
   visibilidade?: boolean;
   arquivo?: UploadedFile | null;
+  avaliacao?: "Plena" | "Parcial" | "Não desenvolvida";
+  cargaHoraria?: number;
+  materialUtilizado?: string;
+  relatoAvaliacao?: string;
+  metodologiaUtilizada?: string;
+  resultados?: string;
 };
 
 type AtividadeFormProps = {
@@ -51,6 +58,7 @@ type AtividadeFormProps = {
 };
 
 const categoriaOptions = ["Ensino", "Pesquisa", "Extensão", "Outros"];
+const avaliacaoOptions = ["Plena", "Parcial", "Não desenvolvida"] as const;
 
 const defaultInitialValues: Partial<AtividadeFormValues> = {
   campus: "Campus de Quixadá",
@@ -124,7 +132,14 @@ export function AtividadeForm({
       datainicio: initialValues.datainicio
         ? dayjs(initialValues.datainicio)
         : undefined,
+      datafim: initialValues.datafim ? dayjs(initialValues.datafim) : undefined,
       visibilidade: initialValues.visibilidade,
+      avaliacao: initialValues.avaliacao,
+      cargaHoraria: initialValues.cargaHoraria,
+      materialUtilizado: initialValues.materialUtilizado,
+      relatoAvaliacao: initialValues.relatoAvaliacao,
+      metodologiaUtilizada: initialValues.metodologiaUtilizada,
+      resultados: initialValues.resultados,
     });
 
     setUploadedFile(initialValues.arquivo ?? null);
@@ -195,6 +210,7 @@ export function AtividadeForm({
       const payload = {
         ...values,
         datainicio: values.datainicio ? values.datainicio.toISOString() : null,
+        datafim: values.datafim ? values.datafim.toISOString() : null,
         arquivo: uploadedFile,
         bolsistas: values.bolsistas || [],
       };
@@ -366,6 +382,111 @@ export function AtividadeForm({
           format="DD/MM/YYYY"
           style={{ width: "100%" }}
           placeholder="Selecione a data de início"
+          disabled={loadingInitialData}
+        />
+      </Form.Item>
+
+      <Form.Item
+        label="Data de Fim"
+        name="datafim"
+        rules={[
+          {
+            validator: (_, value: Dayjs | undefined) => {
+              const dataInicio = form.getFieldValue("datainicio") as
+                | Dayjs
+                | undefined;
+              if (!value || !dataInicio) {
+                return Promise.resolve();
+              }
+              if (value.isBefore(dataInicio, "day")) {
+                return Promise.reject(
+                  new Error(
+                    "A data de fim deve ser igual ou posterior à data de início"
+                  )
+                );
+              }
+              return Promise.resolve();
+            },
+          },
+        ]}
+      >
+        <DatePicker
+          format="DD/MM/YYYY"
+          style={{ width: "100%" }}
+          placeholder="Selecione a data de fim"
+          disabled={loadingInitialData}
+        />
+      </Form.Item>
+
+      <Form.Item label="Avaliação" name="avaliacao">
+        <Select
+          placeholder="Selecione a avaliação"
+          allowClear
+          disabled={loadingInitialData}
+        >
+          {avaliacaoOptions.map((avaliacao) => (
+            <Option key={avaliacao} value={avaliacao}>
+              {avaliacao}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        label="Carga Horária (em horas)"
+        name="cargaHoraria"
+        rules={[
+          {
+            validator: (_, value: number | null | undefined) => {
+              if (value === undefined || value === null || value > 0) {
+                return Promise.resolve();
+              }
+              return Promise.reject(
+                new Error("Informe uma carga horária positiva")
+              );
+            },
+          },
+        ]}
+      >
+        <InputNumber
+          min={1}
+          style={{ width: "100%" }}
+          placeholder="Informe a carga horária total"
+          disabled={loadingInitialData}
+        />
+      </Form.Item>
+
+      <Form.Item label="Material Utilizado" name="materialUtilizado">
+        <TextArea
+          rows={3}
+          placeholder="Liste materiais, ferramentas, softwares, etc."
+          disabled={loadingInitialData}
+        />
+      </Form.Item>
+
+      <Form.Item
+        label="Relato/Avaliação (Resumo Detalhado da Atividade)"
+        name="relatoAvaliacao"
+      >
+        <TextArea
+          rows={4}
+          placeholder="Descreva o desenvolvimento, desafios e conquistas"
+          disabled={loadingInitialData}
+        />
+      </Form.Item>
+
+      <Form.Item label="Metodologia Utilizada" name="metodologiaUtilizada">
+        <TextArea
+          rows={4}
+          placeholder="Explique as estratégias e métodos aplicados"
+          disabled={loadingInitialData}
+        />
+      </Form.Item>
+
+      <Form.Item label="Resultados" name="resultados">
+        <TextArea
+          rows={4}
+          placeholder="Relate os resultados alcançados e impacto"
           disabled={loadingInitialData}
         />
       </Form.Item>

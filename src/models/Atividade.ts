@@ -10,6 +10,7 @@ const atividadeSchema = new Schema(
     bolsistas: [{ type: Types.ObjectId, ref: "User", required: false }],
     participantes: [{ type: Types.ObjectId, ref: "User", required: false }],
     datainicio: { type: Date, required: false },
+    datafim: { type: Date, required: false },
     categoria: {
       type: String,
       required: true,
@@ -17,6 +18,27 @@ const atividadeSchema = new Schema(
       default: "Outros",
     },
     quantidadeAlunos: { type: Number, required: false, min: 0 },
+    avaliacao: {
+      type: String,
+      required: false,
+      enum: ["Plena", "Parcial", "Não desenvolvida"],
+    },
+    cargaHoraria: {
+      type: Number,
+      required: false,
+      min: 0,
+      validate: {
+        validator(value: number | undefined) {
+          if (value === undefined || value === null) return true;
+          return value > 0;
+        },
+        message: "A carga horária deve ser um valor positivo",
+      },
+    },
+    materialUtilizado: { type: String, required: false },
+    relatoAvaliacao: { type: String, required: false },
+    metodologiaUtilizada: { type: String, required: false },
+    resultados: { type: String, required: false },
     arquivo: {
       fileName: { type: String, required: false },
       originalName: { type: String, required: false },

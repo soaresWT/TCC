@@ -20,8 +20,15 @@ export interface Atividade {
     email: string;
   }>;
   datainicio?: string;
+  datafim?: string;
   categoria: "Ensino" | "Pesquisa" | "Extensão" | "Outros";
   quantidadeAlunos?: number;
+  avaliacao?: "Plena" | "Parcial" | "Não desenvolvida";
+  cargaHoraria?: number;
+  materialUtilizado?: string;
+  relatoAvaliacao?: string;
+  metodologiaUtilizada?: string;
+  resultados?: string;
   arquivo?: {
     fileName: string;
     originalName: string;
@@ -41,8 +48,15 @@ export interface AtividadeForm {
   bolsistas?: string[];
   participantes?: string[];
   datainicio?: string;
+  datafim?: string;
   categoria: "Ensino" | "Pesquisa" | "Extensão" | "Outros";
   quantidadeAlunos?: number;
+  avaliacao?: "Plena" | "Parcial" | "Não desenvolvida";
+  cargaHoraria?: number;
+  materialUtilizado?: string;
+  relatoAvaliacao?: string;
+  metodologiaUtilizada?: string;
+  resultados?: string;
   arquivo?: File;
 }
 
