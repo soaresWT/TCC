@@ -286,7 +286,7 @@ export const Header: React.FC = () => {
           <Link href={user ? "/home" : "/"} style={styles.brandLink}>
             <GraduationCap size={28} strokeWidth={1.6} color="#1d4ed8" />
             <div style={styles.brandText}>
-              <h1 style={styles.brandTitle}>Sistema de Gestão</h1>
+              <h1 style={styles.brandTitle}>Repositorio de Atividades</h1>
               <p style={styles.brandSubtitle}>
                 Monitoramento integrado de atividades
               </p>
