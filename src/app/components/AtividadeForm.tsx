@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import {
@@ -11,20 +11,24 @@ import {
   Switch,
   Select,
   message,
-  Upload,
   InputNumber,
   Spin,
 } from "antd";
-import type { UploadProps } from "antd";
 import { Upload as UploadIcon, Trash2 } from "lucide-react";
 import CAMPUSES from "@/lib/campuses";
 import type { Atividade } from "@/types/atividade";
 import type { User } from "@/types/user";
+import { useUploadThing } from "@/lib/uploadthing/client";
+import type { ClientUploadedFileData } from "uploadthing/types";
 
 const { TextArea } = Input;
 const { Option } = Select;
 
 type UploadedFile = NonNullable<Atividade["arquivo"]>;
+type UploadThingMetadata = UploadedFile & {
+  uploadedBy?: string;
+  uploadedAt?: string;
+};
 
 type AtividadeFormValues = {
   nome: string;
@@ -59,6 +63,16 @@ type AtividadeFormProps = {
 
 const categoriaOptions = ["Ensino", "Pesquisa", "Extensão", "Outros"];
 const avaliacaoOptions = ["Plena", "Parcial", "Não desenvolvida"] as const;
+const ACCEPTED_FILE_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "text/plain",
+];
+const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 
 const defaultInitialValues: Partial<AtividadeFormValues> = {
   campus: "Campus de Quixadá",
@@ -108,6 +122,7 @@ export function AtividadeForm({
   );
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredUsuarios = useMemo(() => {
     return filterUsuariosPorPerfil(usuarios, currentUser);
@@ -168,35 +183,88 @@ export function AtividadeForm({
     fetchUsuarios();
   }, [currentUser]);
 
-  const handleUpload: UploadProps["beforeUpload"] = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
+  const handleUploadSuccess = (fileData: UploadedFile) => {
+    setUploadedFile(fileData);
+    form.setFieldValue("arquivo", fileData);
+    message.success("Arquivo enviado com sucesso!");
+  };
+
+  const handleUploadError = (error: unknown) => {
+    setUploading(false);
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro ao enviar arquivo";
+    message.error(errorMessage);
+  };
+  const { startUpload } = useUploadThing("atividadeAttachment");
+  const isUploading = uploading;
+
+  const handleFileInputChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const fileList = event.target.files;
+    const file = fileList?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
+      message.error(
+        "Tipo de arquivo não permitido. Use PDF, DOC, DOCX, JPG, PNG, GIF ou TXT."
+      );
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      message.error("Arquivo muito grande. Máximo permitido: 10MB.");
+      event.target.value = "";
+      return;
+    }
 
     try {
       setUploading(true);
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao enviar arquivo");
+      const uploadedFiles = await startUpload([file]);
+
+      if (!uploadedFiles || uploadedFiles.length === 0) {
+        message.error("Nenhum arquivo foi enviado.");
+        return;
       }
 
-      const data = (await response.json()) as UploadedFile;
-      setUploadedFile(data);
-      form.setFieldValue("arquivo", data);
-      message.success("Arquivo enviado com sucesso!");
+      const [first] =
+        uploadedFiles as ClientUploadedFileData<UploadThingMetadata>[];
+      const serverData = first.serverData as UploadThingMetadata | undefined;
+      const fileUrl = serverData?.url ?? first.ufsUrl ?? first.url ?? "";
+
+      if (!fileUrl) {
+        message.error("Não foi possível recuperar a URL do arquivo enviado.");
+        return;
+      }
+
+      const uploaded: UploadedFile = {
+        fileName: serverData?.fileName ?? first.key,
+        originalName: serverData?.originalName ?? first.name,
+        size: serverData?.size ?? first.size,
+        type: serverData?.type ?? first.type,
+        url: fileUrl,
+      };
+
+      handleUploadSuccess(uploaded);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Erro ao enviar arquivo";
-      message.error(errorMessage);
+      handleUploadError(error);
     } finally {
+      // Reset input to allow selecting the same file again if needed
+      if (event.target) {
+        event.target.value = "";
+      }
       setUploading(false);
     }
+  };
 
-    return false;
+  const handleSelectFileClick = () => {
+    if (loadingInitialData || isUploading) return;
+    fileInputRef.current?.click();
   };
 
   const handleRemoveFile = () => {
@@ -205,15 +273,26 @@ export function AtividadeForm({
   };
 
   const handleSubmit = async (values: AtividadeFormValues) => {
+    if (isUploading) {
+      message.warning(
+        "Aguarde o término do upload antes de salvar a atividade."
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...values,
         datainicio: values.datainicio ? values.datainicio.toISOString() : null,
         datafim: values.datafim ? values.datafim.toISOString() : null,
-        arquivo: uploadedFile,
+        arquivo: uploadedFile ?? undefined,
         bolsistas: values.bolsistas || [],
       };
+
+      if (!uploadedFile) {
+        delete (payload as { arquivo?: unknown }).arquivo;
+      }
 
       const endpoint =
         mode === "create"
@@ -497,20 +576,24 @@ export function AtividadeForm({
         extra="Tipos permitidos: PDF, DOC, imagens ou TXT (máx. 10MB)"
       >
         {!uploadedFile ? (
-          <Upload
-            beforeUpload={handleUpload}
-            showUploadList={false}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt"
-            disabled={uploading || loadingInitialData}
-          >
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt"
+              style={{ display: "none" }}
+              onChange={handleFileInputChange}
+            />
             <Button
               icon={<UploadIcon size={18} strokeWidth={1.6} />}
-              loading={uploading}
+              loading={isUploading}
               style={{ width: "100%" }}
+              onClick={handleSelectFileClick}
+              disabled={loadingInitialData || isUploading}
             >
-              {uploading ? "Enviando..." : "Selecionar Arquivo"}
+              {isUploading ? "Enviando..." : "Selecionar Arquivo"}
             </Button>
-          </Upload>
+          </>
         ) : (
           <div
             style={{
