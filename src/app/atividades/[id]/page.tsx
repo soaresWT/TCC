@@ -132,9 +132,16 @@ export default function DetalhesAtividade() {
   };
 
   const downloadFile = () => {
-    if (atividade?.arquivo?.url) {
-      window.open(atividade.arquivo.url, "_blank");
+    if (!atividade?.arquivo?.url) {
+      return;
     }
+
+    const anchor = document.createElement("a");
+    anchor.href = atividade.arquivo.url;
+    anchor.download = atividade.arquivo.originalName ?? "arquivo";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
   };
 
   const formatFileSize = (bytes: number) => {
