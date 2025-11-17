@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnection from "@/lib/mongodb";
 import Atividade from "@/models/Atividade";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import User from "@/models/User"; // Necessário para registrar o schema do User
+import "@/models/User"; // Side-effect import garante registro do schema em builds otimizados
 import { Types } from "mongoose";
 
 export async function GET(
